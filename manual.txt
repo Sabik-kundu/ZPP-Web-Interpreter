@@ -1,0 +1,262 @@
+ZETA++ LANGUAGE MANUAL (Complete Reference)
+===========================================
+Version 6.0 — Built for the ZETA++ Code Space
+
+This is the full official manual for ZETA++.
+Everything you can use in your .zpp files is listed here with exact syntax and examples.
+
+────────────────────────────────────────────
+1. DATA TYPES
+────────────────────────────────────────────
+num      → Declare with: num x = 42;
+         Use for integers or floating-point numbers
+
+str      → Declare with: str name = "Hello";
+         Use for text
+
+bool     → Declare with: bool flag = true;
+         true or false
+
+array    → Declare with: array nums = [1, 2, 3];
+         List of any values
+
+struct   → Define with: struct Point { num x; num y; }
+         Custom objects with fields and methods
+
+enum     → Define with: enum Color { RED GREEN BLUE }
+         Named constants
+
+null     → let x = null;
+
+Type checking:
+   x is num          → returns true/false
+   x is MyStruct     → checks struct type
+   typeOf(x)         → returns string name of type
+
+────────────────────────────────────────────
+2. KEYWORDS (Reserved Words)
+────────────────────────────────────────────
+let          → mutable variable
+set          → constant (cannot be changed)
+num / str / bool / array → typed declaration
+
+if / else
+when / then / else     → ternary: when cond then a else b
+
+for                    → for i = 1 to 10 step 2
+for each               → for each item in arr
+
+while
+repeat / until         → do-while style
+
+func                   → named function
+fn                     → lambda (arrow or block)
+
+return
+in                     → membership test
+is                     → type check
+
+struct
+enum
+
+attempt / rescue / raise → try / catch / throw
+match / on             → switch / pattern matching
+
+break / continue
+
+────────────────────────────────────────────
+3. OPERATORS
+────────────────────────────────────────────
+Arithmetic:     +  -  *  /  %
+Assignment:     =  +=  -=  *=  /=  %=
+Increment:      ++  --   (works on variables, arrays, structs)
+Comparison:     ==  !=  >  <  >=  <=
+Logical:        &&  ||  !
+Bitwise:        &  |  ^  ~  <<  >>
+Membership:     in
+Type:           is
+Ternary:        when cond then a else b
+
+────────────────────────────────────────────
+4. CORE BUILT-IN FUNCTIONS (always available)
+────────────────────────────────────────────
+
+Output & Input
+   print(...)                  → print to terminal
+   input("prompt?")            → read user input
+
+Type Conversion
+   toNum(x)  toStr(x)  toBool(x)
+
+Math
+   abs  ceil  floor  round  sqrt  pow(x,y)
+   log  log2  log10
+   sin  cos  tan  asin  acos  atan  atan2  hypot
+   max(...)  min(...)  random()  randomInt(a,b)
+   calculate("2+3*4")          → safe math expression
+
+String
+   len(s)  upper  lower  trim
+   split(s, delim)  join(arr, delim)
+   slice  substr  indexOf  includes  replace
+   startsWith  endsWith  repeat
+   padLeft  padRight  charCode  fromChar
+   format("Hello {0}", name)
+
+Array
+   range(a,b,step)  fill(n,value)
+   sum  avg  unique  copy  flat
+   concat  push  pop  shift  unshift  splice  reverse
+   sort  sortDesc  sortStr
+
+Array Methods (functional)
+   arr.map(fn)  arr.filter(fn)  arr.find(fn)
+   arr.every(fn)  arr.some(fn)
+   arr.flatMap(fn)  arr.reduce(fn, initial)
+   arr.sortBy(fn)  arr.count(fn?)
+
+JSON
+   toJSON(obj)  fromJSON(str)
+
+Sorting Algorithms
+   bubbleSort  selectionSort  insertionSort
+   mergeSort  quickSort  heapSort  countingSort
+
+Search
+   linearSearch(arr, target)
+   binarySearch(arr, target)
+
+Other
+   keys(obj)  values(obj)  has(obj, key)
+
+────────────────────────────────────────────
+5. LIBRARIES (import with #import["name.zl"])
+────────────────────────────────────────────
+
+math.zl
+   degrees(x)  radians(x)  sinD  cosD  tanD
+   clamp(x,lo,hi)  lerp(a,b,t)  map
+   factorial  isPrime  gcd  lcm  fibonacci
+   primes(n)  combination(n,r)  permutation(n,r)
+   matMul(A,B)  matTranspose(A)
+   median  mode  variance  stddev
+
+time.zl
+   now  year  month  day  hour  minute  second
+   dateStr  timeStr  timestamp
+   formatTime(ms)  formatDuration(ms)
+   timerStart  timerEnd  timerElapsed
+   startClock("neon" | "retro" | "minimal")
+   stopClock()
+
+net.zl
+   fetchText(url)  fetchLines(url)  fetchJSON(url)
+   fetchCSV(url, hasHeader)  fetchTable(url)
+   jsonGet(obj, "path.key")
+
+convert.zl
+   cToF  fToC  cToK  kToC
+   kmToMiles  bytesToMB  formatBytes
+
+random.zl
+   setSeed  randInt  randFloat  randBool
+   coinFlip  dice  pick(arr)  shuffle(arr)
+   sample(arr, k)  gaussianRandom  uuid
+
+str.zl
+   countOccurrences  isPalindrome  titleCase
+   camelCase  snakeCase  truncate  wordWrap
+   isEmailStr  isURLStr  template(str, vars)
+
+algo.zl
+   makeStack()  makeQueue()  makeMinPQ()
+   makeLinkedList()
+   makeGraph(directed) → addEdge, bfs, dfs, dijkstra
+
+────────────────────────────────────────────
+6. MACHINE LEARNING LIBRARY (#import["ml.zl"])
+────────────────────────────────────────────
+
+Preprocessing
+   normalize(X)  standardize(X)
+   trainTestSplit(X, y, 0.2)
+   oneHotEncode(y)  polyFeatures(X, 2)
+
+Metrics
+   accuracy(y_true, y_pred)
+   mse  rmse  r2score
+   confusionMatrix  precision  recall  f1score
+
+Datasets
+   loadIris()  loadHousing()  loadXOR()
+   loadMoons(n, noise)  loadSpam()
+
+Models
+   LinearRegression()          RidgeRegression(alpha)
+   LogisticRegression()        KNNClassifier(k)
+   DecisionTree()              RandomForest()
+   KMeans(k)                   DBSCAN(eps, minPts)
+   LinearSVM(C)                MLP([10,5,1])
+   PCA(n)                      AdaBoost(n)
+   GradientBoosting(n, lr)
+
+Pre-trained
+   xorSolver()  irisClassifier()  housingPredictor()
+
+Tools
+   saveModel(model, "file.zml")
+   loadModel(jsonString)
+   modelSummary(model)
+   crossValScore  gridSearch  pipeline
+
+────────────────────────────────────────────
+7. ADVANCED SYNTAX EXAMPLES
+────────────────────────────────────────────
+
+Struct with methods
+   struct Circle {
+     num radius;
+     fn area() { return 3.14159 * self.radius * self.radius; }
+   }
+   Circle c; c.radius = 5; print(c.area());
+
+Lambda
+   let doubled = nums.map(fn(n) => n * 2);
+   let evens   = nums.filter(fn(n) { return n % 2 == 0; });
+
+Match
+   match x {
+     on 1 => { print("one"); }
+     on 7 => { print("seven!"); }
+     else  => { print("other"); }
+   }
+
+Try / Catch
+   attempt {
+     raise "error";
+   } rescue e {
+     print("caught: " + e);
+   }
+
+Destructuring
+   let [a, b] = [10, 20];
+   let {x, y} = point;
+
+────────────────────────────────────────────
+8. EDITOR FEATURES (in the web IDE)
+────────────────────────────────────────────
+• Auto-save every 600 ms
+• Ctrl/Cmd + S  → manual save
+• Ctrl/Cmd + N  → new file
+• Ctrl/Cmd + O  → upload .zpp file
+• Double-click filename → inline rename
+• ↑ Upload button and ↓ Download button
+• Live search box in sidebar
+• Storage usage bar
+• Beforeunload warning if unsaved changes
+
+────────────────────────────────────────────
+You now have the complete reference.
+Just copy any example into the editor and press Run Code.
+
+Enjoy Coding in ZETA++!

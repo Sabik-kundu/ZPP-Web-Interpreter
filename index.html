@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZETA++ Code Space</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .terminal-content {
+      font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 10px 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .t-line {
+      display: flex;
+      align-items: baseline;
+      min-height: 1.6em;
+    }
+    .t-answered    { color: #e2e8f0; }
+    .t-prompt-label { color: #7ec8e3; white-space: pre; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <h2>Hi, Sabik Kundu</h2>
+        <div>
+          <button id="uploadBtn" class="icon-btn" title="Upload .zpp File">↑</button>
+          <button id="downloadBtn" class="icon-btn" title="Download Current File">↓</button>
+          <button id="newFileBtn" class="icon-btn" title="New File">+</button>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept=".zpp" style="display: none;">
+      <div class="sidebar-section">ZETA++ FILES</div>
+      <ul id="fileList" class="file-list"></ul>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="file-info">
+          <button id="toggleSidebarBtn" class="icon-btn" style="margin-right: 15px;" title="Toggle Sidebar">☰</button>
+          <span id="currentFileName">untitled.zpp</span>
+          <span id="unsavedIndicator" class="hidden">&bull;</span>
+        </div>
+        <div class="actions">
+          <button id="saveBtn" class="btn secondary">Save</button>
+          <button id="runBtn" class="btn primary">&#9654; Run Code</button>
+        </div>
+      </header>
+
+      <div class="editor-container" id="editorContainer">
+        <div id="lineHighlight" class="line-highlight"></div>
+        <textarea id="editor" spellcheck="false" placeholder="Write your zpp code here..."></textarea>
+      </div>
+
+      <div class="resizer" id="resizer"></div>
+
+      <div class="output-container" id="outputContainer">
+        <div class="output-header">
+          Terminal
+          <button onclick="clearTerminal()"
+                  style="float:right;background:none;border:none;color:#888;cursor:pointer;font-size:12px;">
+            &#x2715; Clear
+          </button>
+        </div>
+        <div id="output" class="terminal-content"></div>
+      </div>
+    </main>
+
+  </div>
+
+  <script src="interpreter.js"></script>
+  <script src="library.js"></script>
+  <script src="ml.js"></script>
+  <script src="gui.js"></script>
+  <script src="td2.js"></script>
+  <script src="guiass.js"></script>
+
+  <script>
+  const _vfs = {};
+
+  function _esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function clearTerminal() {
+    document.getElementById('output').innerHTML = '';
+  }
+
+  function _printLine(html) {
+    const out = document.getElementById('output');
+    const d   = document.createElement('div');
+    d.className = 't-line';
+    d.innerHTML = html;
+    out.appendChild(d);
+    out.scrollTop = out.scrollHeight;
+  }
+
+  let _session = null;
+
+  function runCode() {
+    _session = {
+      code:      document.getElementById('editor').value,
+      answers:   [],
+      snapshots: []
+    };
+    clearTerminal();
+    _execute();
+  }
+
+  function _execute() {
+    const values = _session.answers.map(a => a.value);
+
+    let result = null;
+    let needed = null;
+
+    try {
+      result = interpretDSALang(_session.code, values, { files: _vfs });
+    } catch (e) {
+      if (e && e.isInputNeeded) {
+        needed = e;
+      } else {
+        clearTerminal();
+        _printLine('<span style="color:#f87171">&#9888; Error: ' + _esc(e.message) + '</span>');
+        return;
+      }
+    }
+
+    if (needed) {
+      _session.snapshots[_session.answers.length] = needed.outputSoFar;
+    }
+
+    clearTerminal();
+
+    const snapshots = _session.snapshots;
+    const answers   = _session.answers;
+
+    for (let i = 0; i < answers.length; i++) {
+      const prevLen = i === 0 ? 0 : snapshots[i - 1].length;
+      const snap    = snapshots[i] || [];
+      
+      snap.slice(prevLen).forEach(line => _printLine(_esc(line)));
+      
+      _frozen(answers[i].prompt, answers[i].value);
+    }
+
+    const lastSnapLen = answers.length > 0
+      ? (snapshots[answers.length - 1] || []).length
+      : 0;
+    const finalLines = needed ? needed.outputSoFar : result;
+    finalLines.slice(lastSnapLen).forEach(line => _printLine(_esc(line)));
+
+    if (needed) {
+      _inlineInput(needed.prompt);
+    } else {
+      _printLine('<span style="color:#4b5563">&#8212; done &#8212;</span>');
+    }
+  }
+
+  function _frozen(prompt, value) {
+    _printLine(
+      (prompt ? '<span class="t-prompt-label">' + _esc(prompt) + '</span>' : '') +
+      '<span class="t-answered">' + _esc(value) + '</span>'
+    );
+  }
+
+  function _inlineInput(prompt) {
+    const out = document.getElementById('output');
+
+    const row = document.createElement('div');
+    row.className = 't-line';
+
+    if (prompt) {
+      const lbl = document.createElement('span');
+      lbl.className   = 't-prompt-label';
+      lbl.textContent = prompt;
+      row.appendChild(lbl);
+    }
+
+    const inp = document.createElement('input');
+    inp.type          = 'text';
+    inp.autocomplete  = 'off';
+    inp.spellcheck    = false;
+    inp.style.cssText = [
+      'flex:1', 'min-width:4ch',
+      'background:transparent', 'border:none', 'outline:none',
+      'color:#e2e8f0', 'font-family:inherit',
+      'font-size:inherit', 'line-height:inherit',
+      'caret-color:#7ec8e3', 'padding:0', 'margin:0'
+    ].join(';');
+
+    row.appendChild(inp);
+    out.appendChild(row);
+    out.scrollTop = out.scrollHeight;
+
+    setTimeout(() => inp.focus(), 30);
+
+    inp.addEventListener('keydown', function handler(e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      inp.removeEventListener('keydown', handler);
+      inp.disabled = true;           
+      inp.style.color = '#e2e8f0';   
+
+      const val = inp.value;
+      _session.answers.push({ prompt, value: val });
+      setTimeout(_execute, 0);       
+    });
+  }
+
+  document.getElementById('runBtn').addEventListener('click', runCode);
+  </script>
+
+  <script src="addon.js"></script>
+  <script src="ASS.js"></script>
+</body>
+</html>
+
